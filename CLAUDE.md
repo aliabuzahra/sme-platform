@@ -1,6 +1,6 @@
 # Definition of done
 
-Draft for the repository skeleton (UC-001). UC-003 adds the architecture docs and ADRs. Until those exist, follow this file and `README.md`.
+Read `docs/architecture.md` and the decision records in `docs/adr/` before changing code (UC-003). A card that settles a design question adds or updates an ADR in the same pull request. Code must not depend on an ADR whose status is still Proposed. `README.md` covers setup.
 
 A change is done only when all three are true:
 

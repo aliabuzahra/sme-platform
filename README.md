@@ -73,25 +73,19 @@ dotnet run --project src/Identity
 
 ## Not in this skeleton
 
-- Architecture docs and ADRs (UC-003)
 - Product behavior: tenants, row-level security, phone OTP, the gateway auth check, the outbox, App Insights
 - Container images for the .NET services
 - The web and mobile clients (UC-018, UC-019)
 
 ## Decisions
 
-- **.NET 10 (`net10.0`).** Latest LTS at the time of the skeleton. .NET 8 is out of support.
-- **Solution format is `slnx`.** That is what `dotnet new sln` writes on the .NET 10 SDK.
-- **xUnit** for test projects, with versions centralized in `Directory.Packages.props`.
-- **One local Postgres 18 instance and one database.** No schemas or roles yet. Services are not containerized; Compose is the shared database, and `dotnet run` starts a service.
-- **Platform is not an HTTP service.** Gateway, Identity, Notifications, Audit, Billing, and Templates are the service projects. Platform cross-cutting code belongs in `Sme.BuildingBlocks`.
-- **HTTP only on localhost.** Dev HTTPS certificates are not required for the skeleton.
+Decisions are recorded in [`docs/adr/`](docs/adr/README.md) and summarized in [`docs/architecture.md`](docs/architecture.md). The ones the skeleton already follows are .NET 10 with `slnx` (ADR-0002), one project per service with no references between services (ADR-0003), xUnit with central package versions (ADR-0004), one local Postgres through Compose (ADR-0005), and HTTP only on localhost (ADR-0006).
 
 ## Open decisions
 
-These need the owner before later cards lock them in. UC-003 is the place to record the answers as ADRs.
+These are written as **Proposed** ADRs and need the owner before the card that depends on them starts:
 
-- Database-per-service, schema-per-service, or one shared database once services start storing data.
-- Whether each service gets its own image in Compose before the Azure staging environment (UC-013).
-- Whether the classic `.sln` format is required for a tool that cannot read `slnx`.
-- The repository license. There is no `LICENSE` file yet.
+- Database ownership per service, before UC-006 (ADR-0008).
+- Container images for services before Staging, before UC-013 (ADR-0009).
+- Whether a classic `.sln` is needed next to `slnx` (ADR-0010).
+- The repository license (ADR-0011).
