@@ -2,7 +2,7 @@
 
 One repository, one .NET project per service. Services build and run separately, and share local infrastructure through Docker Compose.
 
-This is the repository skeleton (UC-001). It does not implement tenants, sign-in, billing, or other product behavior.
+This started as the repository skeleton (UC-001). The first product behavior is tenant registration in Identity (UC-006); sign-in, billing and the rest are not implemented yet.
 
 ## Layout
 
@@ -33,7 +33,22 @@ dotnet build Sme.Platform.slnx
 dotnet test Sme.Platform.slnx
 ```
 
-`dotnet test` succeeds with no tests. Each `tests/<Service>` project is intentionally empty until a later card adds behavior.
+Identity tests (UC-006) need the local Postgres, because they prove row-level security in the database itself:
+
+```bash
+docker compose up -d --wait
+dotnet test Sme.Platform.slnx
+```
+
+The other `tests/<Service>` projects are intentionally empty until a later card adds behavior.
+
+## Identity: tenants (UC-006)
+
+- `POST /tenants` with `{ "name": "..." }` registers a business and returns its id.
+- `GET /tenants/{id}` with the `X-Tenant-Id` header returns the tenant only when it is the caller's own; any other id is `404`.
+- Data lives in the `identity` schema (one schema per service). `identity.tenants` has row-level security: each request runs in a transaction as the unprivileged `identity_app` role with `app.tenant_id` set, so the database hides and refuses other tenants' rows.
+- `X-Tenant-Id` is a stand-in until sign-in (UC-007) puts the tenant in a verified token and the Gateway (UC-011) becomes the only caller. It is not authentication; do not expose Identity publicly.
+- In Development the service creates its schema on startup (`Database:MigrateOnStartup`) using the Compose defaults in `appsettings.Development.json`. Other environments set `ConnectionStrings__Postgres` and run migrations as a separate step (UC-013).
 
 ## CI
 
@@ -74,7 +89,7 @@ dotnet run --project src/Identity
 ## Not in this skeleton
 
 - Architecture docs and ADRs (UC-003)
-- Product behavior: tenants, row-level security, phone OTP, the gateway auth check, the outbox, App Insights
+- Product behavior beyond tenant registration: phone OTP, the gateway auth check, the outbox, App Insights
 - Container images for the .NET services
 - The web and mobile clients (UC-018, UC-019)
 
