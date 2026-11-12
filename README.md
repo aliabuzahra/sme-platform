@@ -33,11 +33,11 @@ dotnet build Sme.Platform.slnx
 dotnet test Sme.Platform.slnx
 ```
 
-`dotnet test` succeeds with no tests. Each `tests/<Service>` project is intentionally empty until a later card adds behavior.
+The Identity tests are integration tests: they need a reachable Postgres, create a database per run and drop it afterwards. They connect with `SME_TEST_ADMIN_CONNECTION`, defaulting to the Compose placeholders below (`Host=localhost;Port=5432;Database=postgres;Username=sme;Password=change-me`). The login must be allowed to create databases and roles, which the Compose superuser is. The other `tests/<Service>` projects are intentionally empty until their cards add behavior.
 
 ## CI
 
-GitHub Actions runs on every pull request and every push to `main`. The job is named **Build and test**. It restores, builds, and tests `Sme.Platform.slnx` with the .NET SDK from `global.json`, then runs `docker compose config`. The job is limited to 8 minutes.
+GitHub Actions runs on every pull request and every push to `main`. The job is named **Build and test**. It starts a Postgres 18 service with the Compose placeholder credentials, restores, builds, and tests `Sme.Platform.slnx` with the .NET SDK from `global.json`, then runs `docker compose config`. The job is limited to 8 minutes.
 
 A pull request whose tests fail cannot be merged once the repository owner has required the **Build and test** check on the target branch. That setting is documented in `docs/branch-protection-for-owner.md` and is applied by the owner, not by this change.
 
@@ -69,11 +69,20 @@ Stop it with `docker compose down`. Add `-v` to drop the data volume.
 dotnet run --project src/Identity
 ```
 
-`GET http://localhost:5081/health` returns the service name. The ports are listed in the layout above and in each project's `Properties/launchSettings.json`. Services do not connect to Postgres yet.
+`GET http://localhost:5081/health` returns the service name. The ports are listed in the layout above and in each project's `Properties/launchSettings.json`.
+
+Identity connects to Postgres (UC-006). `appsettings.Development.json` points at the Compose database; other environments set `Database__ConnectionString`. On start the service applies its SQL migrations from `src/Identity/Migrations`, which create the `identity` schema, the `sme_app` role and the tenants table with row-level security. The login role therefore needs CREATEROLE the first time, or an operator creates `sme_app` beforehand. The other services do not connect to Postgres yet.
+
+```bash
+curl -s -X POST localhost:5081/tenants/ -H 'content-type: application/json' -d '{"name":"Amman Bakery"}'
+curl -s localhost:5081/tenants/<id> -H 'X-Tenant-Id: <id>'
+```
+
+The `X-Tenant-Id` header stands in for the tenant claim until UC-007 issues tokens and UC-011 puts the Gateway in front; a request for any other tenant's id is a 404.
 
 ## Not in this skeleton
 
-- Product behavior: tenants, row-level security, phone OTP, the gateway auth check, the outbox, App Insights
+- Product behavior beyond tenant registration: phone OTP, branches, users and roles, the gateway auth check, the outbox, App Insights
 - Container images for the .NET services
 - The web and mobile clients (UC-018, UC-019)
 

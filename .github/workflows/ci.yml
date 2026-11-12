@@ -23,6 +23,22 @@ jobs:
     name: Build and test
     runs-on: ubuntu-latest
     timeout-minutes: 8
+    # Integration tests (UC-006) run against the same Postgres image and placeholder
+    # credentials as docker-compose.yml. Tests create and drop their own databases.
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: sme
+          POSTGRES_PASSWORD: change-me
+          POSTGRES_DB: sme_platform
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U sme -d sme_platform"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
     steps:
       - name: Checkout
         uses: actions/checkout@v4

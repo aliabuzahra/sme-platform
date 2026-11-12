@@ -23,4 +23,4 @@ Option B: one database, one schema per service, one Postgres role per service wi
 - UC-006 creates the `identity` schema and role, and the first migration tooling. Later services copy that pattern.
 - Staging (UC-013) provisions one database and six roles.
 - Moving a service to its own database later is a schema move, not a rewrite.
-- Until this record is **Accepted**, UC-006 cannot start. If the owner picks A or C, update this record and the two rows above.
+- UC-006 was implemented on this proposed option so the Identity work could proceed: the `identity` schema and the `sme_app` role are created by `src/Identity/Migrations/0001_tenants.sql`. The record stays **Proposed** until the owner confirms. If the owner picks A or C, that migration and the SQL in `TenantRepository` are the only places the schema name appears.

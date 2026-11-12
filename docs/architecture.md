@@ -7,14 +7,14 @@ One repository. One .NET project per service. Services build and run separately 
 | Project | Port | Responsibility (planned) | Card that adds behavior |
 | --- | --- | --- | --- |
 | `src/Gateway` | 5080 | Single HTTP entry point. Validates the token, checks the tenant and module entitlements, forwards to a service. | UC-011 |
-| `src/Identity` | 5081 | Tenants, branches, users, roles, invitations, phone and OTP sign-in. | UC-006, UC-007, UC-008, UC-016 |
+| `src/Identity` | 5081 | Tenants (done, UC-006), branches, users, roles, invitations, phone and OTP sign-in. | UC-007, UC-008, UC-016 |
 | `src/Notifications` | 5082 | Outbound messages: OTP delivery, later SMS and WhatsApp. | UC-007 (fake sender), later cards |
 | `src/Audit` | 5083 | Audit trail of who did what, per tenant. | later card |
 | `src/Billing` | 5084 | Plans, module entitlements, invoices. | later card |
 | `src/Templates` | 5085 | Sector templates: services, labels, messages that a new tenant starts with. | UC-017, UC-020 |
-| `src/BuildingBlocks` | n/a | Shared library. Cross-cutting code only: tenant context, outbox, messaging contracts, common results. | UC-009, UC-012 |
+| `src/BuildingBlocks` | n/a | Shared library. Cross-cutting code only: tenant context and tenant-aware connections (done, UC-006), SQL migrator (done), outbox, messaging contracts. | UC-009, UC-012 |
 
-Each service has an `xUnit` test project under `tests/<Service>`. Every service today exposes `GET /health` and nothing else. Ports are set in each project's `Properties/launchSettings.json`.
+Each service has an `xUnit` test project under `tests/<Service>`. Every service exposes `GET /health`. Identity also exposes `POST /tenants/` and `GET /tenants/{id}`. Ports are set in each project's `Properties/launchSettings.json`.
 
 ## Boundaries
 
@@ -44,11 +44,17 @@ Today the Gateway forwards nothing. The flow above is the target that UC-006 to 
 
 ## Data
 
-Local development uses one Postgres 18 instance started by `docker-compose.yml`, with the placeholder credentials listed in `README.md`. Services do not connect to it yet.
+Local development uses one Postgres 18 instance started by `docker-compose.yml`, with the placeholder credentials listed in `README.md`. Identity is the first service that stores data (UC-006).
 
-How data is split between services once they store it (one database per service, one schema per service, or one shared database) is an open decision. See [ADR-0008](adr/0008-database-ownership-per-service.md). UC-006 is the first card that needs the answer, so it must be accepted before that card starts.
+How data is split between services (one database per service, one schema per service, or one shared database) is still [ADR-0008](adr/0008-database-ownership-per-service.md), status Proposed. UC-006 was built on its proposed option, one schema per service: Identity owns the `identity` schema, created by its own migrations. If the owner chooses another option, the schema prefix in Identity's migration and SQL is the only thing that moves.
 
-Tenant isolation is row-level: every tenant-owned table carries a `tenant_id`, and Postgres row-level security blocks a session from reading another tenant's rows. UC-006 adds the first table and the first isolation test. UC-009 adds the harness that runs those tests in CI.
+Tenant isolation is row-level (ADR-0007). The pieces in `Sme.BuildingBlocks`:
+
+- `TenantContext`, scoped per request, holds the current tenant. `UseTenantHeader()` fills it from `X-Tenant-Id` until UC-007 replaces that with the token claim.
+- `TenantConnectionFactory` opens connections in two modes. Platform mode is the owning login role with no tenant, used only where no tenant exists yet (registration). Tenant mode does `SET ROLE sme_app` and sets `app.tenant_id`, so every policy filters to that tenant. Npgsql resets both when the connection returns to the pool.
+- `SqlMigrator` applies a service's embedded `Migrations/NNNN_name.sql` scripts once each, recorded in `<schema>.schema_migrations`, at service start.
+
+The `sme_app` role has no login, no BYPASSRLS and owns nothing, so policies apply to it. Every tenant-owned table enables row-level security with a policy on `app.tenant_id`; the tenants table itself filters on its `id`. UC-009 adds the harness that fails CI on a deliberately leaking endpoint.
 
 ## Build, test, CI
 

@@ -4,4 +4,8 @@
     <ProjectReference Include="..\BuildingBlocks\Sme.BuildingBlocks.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <EmbeddedResource Include="Migrations\*.sql" />
+  </ItemGroup>
+
 </Project>
