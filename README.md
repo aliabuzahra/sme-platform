@@ -94,7 +94,6 @@ dotnet run --project src/Identity
 
 These need the owner before later cards lock them in. They are recorded as **Proposed** ADRs:
 
-- Data layout once services store data (schema-per-service proposed) — `docs/adr/0005-postgres-tenant-isolation.md`.
 - The repository license — `docs/adr/0009-repository-license.md`.
 
 Still open without an ADR, to be decided on the card that needs it:

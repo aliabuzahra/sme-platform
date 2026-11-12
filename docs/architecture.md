@@ -71,8 +71,8 @@ This backbone is UC-012. Nothing in the skeleton uses it yet.
 
 ## 6. Data
 
-- One Postgres 18 instance locally (Compose), one database, no schemas or roles yet.
-- How data is split once services store it — database-per-service, schema-per-service, or shared — is **open** and recorded as a proposal in [ADR-0005](adr/0005-postgres-tenant-isolation.md). UC-006 is the first card that stores tenant data and must not start until that ADR is accepted.
+- One Postgres 18 instance locally (Compose), one database.
+- One schema per service in that database (`identity`, `billing`, …), each with its own unprivileged role ([ADR-0005](adr/0005-postgres-tenant-isolation.md)). UC-006 creates the first one, `identity`.
 - Migrations belong to the owning service and run on deploy.
 
 ## 7. Environments
