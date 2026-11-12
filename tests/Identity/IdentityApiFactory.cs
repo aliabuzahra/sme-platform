@@ -21,12 +21,24 @@ public sealed class IdentityApiFactory : WebApplicationFactory<Program>, IAsyncL
     public string ConnectionString =>
         new NpgsqlConnectionStringBuilder(AdminConnection) { Database = DatabaseName }.ConnectionString;
 
+    // Test classes run in parallel, and Postgres can trip over two CREATE DATABASE calls that copy
+    // the template at the same moment, so creation is serialized within the test process.
+    private static readonly SemaphoreSlim CreateLock = new(1, 1);
+
     public async Task InitializeAsync()
     {
-        await using var admin = new NpgsqlConnection(AdminConnection);
-        await admin.OpenAsync();
-        await using var cmd = new NpgsqlCommand($"CREATE DATABASE \"{DatabaseName}\"", admin);
-        await cmd.ExecuteNonQueryAsync();
+        await CreateLock.WaitAsync();
+        try
+        {
+            await using var admin = new NpgsqlConnection(AdminConnection);
+            await admin.OpenAsync();
+            await using var cmd = new NpgsqlCommand($"CREATE DATABASE \"{DatabaseName}\"", admin);
+            await cmd.ExecuteNonQueryAsync();
+        }
+        finally
+        {
+            CreateLock.Release();
+        }
     }
 
     async Task IAsyncLifetime.DisposeAsync()

@@ -7,14 +7,14 @@ One repository. One .NET project per service. Services build and run separately 
 | Project | Port | Responsibility (planned) | Card that adds behavior |
 | --- | --- | --- | --- |
 | `src/Gateway` | 5080 | Single HTTP entry point. Validates the token, checks the tenant and module entitlements, forwards to a service. | UC-011 |
-| `src/Identity` | 5081 | Tenants (done, UC-006), branches, users, roles, invitations, phone and OTP sign-in. | UC-007, UC-008, UC-016 |
+| `src/Identity` | 5081 | Tenants (done, UC-006), branches with opening hours (done, UC-008), users, roles, invitations, phone and OTP sign-in. | UC-007, UC-016 |
 | `src/Notifications` | 5082 | Outbound messages: OTP delivery, later SMS and WhatsApp. | UC-007 (fake sender), later cards |
 | `src/Audit` | 5083 | Audit trail of who did what, per tenant. | later card |
 | `src/Billing` | 5084 | Plans, module entitlements, invoices. | later card |
 | `src/Templates` | 5085 | Sector templates: services, labels, messages that a new tenant starts with. | UC-017, UC-020 |
 | `src/BuildingBlocks` | n/a | Shared library. Cross-cutting code only: tenant context and tenant-aware connections (done, UC-006), SQL migrator (done), outbox, messaging contracts. | UC-009, UC-012 |
 
-Each service has an `xUnit` test project under `tests/<Service>`. Every service exposes `GET /health`. Identity also exposes `POST /tenants/` and `GET /tenants/{id}`. Ports are set in each project's `Properties/launchSettings.json`.
+Each service has an `xUnit` test project under `tests/<Service>`. Every service exposes `GET /health`. Identity also exposes `POST /tenants/`, `GET /tenants/{id}`, and `POST`, `GET /branches/` and `GET /branches/{id}` for the current tenant. Ports are set in each project's `Properties/launchSettings.json`.
 
 ## Boundaries
 

@@ -1,5 +1,6 @@
 using Sme.BuildingBlocks.Data;
 using Sme.BuildingBlocks.Tenancy;
+using Sme.Identity.Branches;
 using Sme.Identity.Tenants;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -9,6 +10,7 @@ var serviceName = builder.Configuration["Service:Name"]
 builder.Services.AddServiceDatabase(builder.Configuration, schema: "identity", typeof(Program).Assembly);
 builder.Services.AddTenantContext();
 builder.Services.AddScoped<TenantRepository>();
+builder.Services.AddScoped<BranchRepository>();
 
 var app = builder.Build();
 
@@ -24,6 +26,7 @@ app.MapGet("/health", () => Results.Ok(new
 }));
 
 app.MapTenantEndpoints();
+app.MapBranchEndpoints();
 
 app.Run();
 

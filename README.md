@@ -78,6 +78,14 @@ curl -s -X POST localhost:5081/tenants/ -H 'content-type: application/json' -d '
 curl -s localhost:5081/tenants/<id> -H 'X-Tenant-Id: <id>'
 ```
 
+Branches (UC-008) belong to the tenant in the header. Opening hours are a map of `mon` to `sun` to a list of `{"open":"HH:mm","close":"HH:mm"}` intervals; a missing day is closed.
+
+```bash
+curl -s -X POST localhost:5081/branches/ -H 'X-Tenant-Id: <id>' -H 'content-type: application/json' \
+  -d '{"name":"Abdoun","hours":{"thu":[{"open":"16:00","close":"23:00"}],"fri":[{"open":"13:00","close":"15:00"},{"open":"16:00","close":"23:30"}]}}'
+curl -s localhost:5081/branches/ -H 'X-Tenant-Id: <id>'
+```
+
 The `X-Tenant-Id` header stands in for the tenant claim until UC-007 issues tokens and UC-011 puts the Gateway in front; a request for any other tenant's id is a 404.
 
 ## Not in this skeleton
