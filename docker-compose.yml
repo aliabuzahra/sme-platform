@@ -1,0 +1,27 @@
+# Local infrastructure shared by the services.
+# Application projects run with `dotnet run` until image builds are added.
+# Postgres 18 stores data under /var/lib/postgresql/18/docker, so the volume
+# is mounted at /var/lib/postgresql (not /var/lib/postgresql/data).
+
+name: sme-platform
+
+services:
+  postgres:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-sme}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-me}
+      POSTGRES_DB: ${POSTGRES_DB:-sme_platform}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - sme_postgres_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+
+volumes:
+  sme_postgres_data:

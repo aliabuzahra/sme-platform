@@ -1,0 +1,41 @@
+<Solution>
+  <Folder Name="/src/BuildingBlocks/">
+    <Project Path="src/BuildingBlocks/Sme.BuildingBlocks.csproj" />
+  </Folder>
+  <Folder Name="/src/Audit/">
+    <Project Path="src/Audit/Sme.Audit.csproj" />
+  </Folder>
+  <Folder Name="/src/Billing/">
+    <Project Path="src/Billing/Sme.Billing.csproj" />
+  </Folder>
+  <Folder Name="/src/Gateway/">
+    <Project Path="src/Gateway/Sme.Gateway.csproj" />
+  </Folder>
+  <Folder Name="/src/Identity/">
+    <Project Path="src/Identity/Sme.Identity.csproj" />
+  </Folder>
+  <Folder Name="/src/Notifications/">
+    <Project Path="src/Notifications/Sme.Notifications.csproj" />
+  </Folder>
+  <Folder Name="/src/Templates/">
+    <Project Path="src/Templates/Sme.Templates.csproj" />
+  </Folder>
+  <Folder Name="/tests/Audit/">
+    <Project Path="tests/Audit/Sme.Audit.Tests.csproj" />
+  </Folder>
+  <Folder Name="/tests/Billing/">
+    <Project Path="tests/Billing/Sme.Billing.Tests.csproj" />
+  </Folder>
+  <Folder Name="/tests/Gateway/">
+    <Project Path="tests/Gateway/Sme.Gateway.Tests.csproj" />
+  </Folder>
+  <Folder Name="/tests/Identity/">
+    <Project Path="tests/Identity/Sme.Identity.Tests.csproj" />
+  </Folder>
+  <Folder Name="/tests/Notifications/">
+    <Project Path="tests/Notifications/Sme.Notifications.Tests.csproj" />
+  </Folder>
+  <Folder Name="/tests/Templates/">
+    <Project Path="tests/Templates/Sme.Templates.Tests.csproj" />
+  </Folder>
+</Solution>
