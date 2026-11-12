@@ -42,6 +42,10 @@ jobs:
       - name: Build
         run: dotnet build Sme.Platform.slnx --no-restore --configuration Release --verbosity minimal
 
+      # UC-006: Identity tests run against the Compose Postgres (row-level security needs a real database).
+      - name: Start Postgres
+        run: docker compose up -d --wait
+
       - name: Test
         run: >-
           dotnet test Sme.Platform.slnx
@@ -53,3 +57,7 @@ jobs:
 
       - name: Validate Docker Compose
         run: docker compose config --quiet
+
+      - name: Stop Postgres
+        if: always()
+        run: docker compose down -v
