@@ -19,7 +19,7 @@ public sealed class TenantTests(IdentityApiFactory factory) : IClassFixture<Iden
 
     private async Task<Tenant> Register(string name)
     {
-        var response = await Client().PostAsJsonAsync("/tenants/", new RegisterTenantRequest(name, null));
+        var response = await Client().PostAsJsonAsync("/tenants/", new RegisterTenantRequest(name, null, "+962790000001"));
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
         return (await response.Content.ReadFromJsonAsync<Tenant>())!;
     }
@@ -95,14 +95,22 @@ public sealed class TenantTests(IdentityApiFactory factory) : IClassFixture<Iden
     }
 
     [Theory]
-    [InlineData("", null)]
-    [InlineData("   ", null)]
-    [InlineData("Fine", "Jordan")]
-    public async Task Invalid_registrations_are_rejected(string name, string? country)
+    [InlineData("", null, "+962790000002")]
+    [InlineData("   ", null, "+962790000002")]
+    [InlineData("Fine", "Jordan", "+962790000002")]
+    [InlineData("Fine", null, "12345")]
+    public async Task Invalid_registrations_are_rejected(string name, string? country, string ownerPhone)
     {
-        var response = await Client().PostAsJsonAsync("/tenants/", new RegisterTenantRequest(name, country));
+        var response = await Client().PostAsJsonAsync("/tenants/", new RegisterTenantRequest(name, country, ownerPhone));
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public void Tests_run_against_their_own_database()
+    {
+        var options = factory.Services.GetRequiredService<DatabaseOptions>();
+        Assert.Contains(factory.DatabaseName, options.ConnectionString);
     }
 
     [Fact]

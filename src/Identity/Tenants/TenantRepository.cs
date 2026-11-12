@@ -6,17 +6,33 @@ namespace Sme.Identity.Tenants;
 public sealed class TenantRepository(TenantConnectionFactory connections)
 {
     /// <summary>Registers a tenant. Runs as the platform: there is no tenant yet to act for.</summary>
-    public async Task<Tenant> RegisterAsync(string name, string country, CancellationToken ct)
+    public async Task<Tenant> RegisterAsync(string name, string country, string ownerPhone, CancellationToken ct)
     {
         await using var connection = await connections.OpenPlatformAsync(ct);
-        await using var cmd = new NpgsqlCommand(
+        await using var tx = await connection.BeginTransactionAsync(ct);
+
+        Tenant tenant;
+        await using (var cmd = new NpgsqlCommand(
             "INSERT INTO identity.tenants (name, country) VALUES (@name, @country) " +
-            "RETURNING id, name, country, status, created_at", connection);
-        cmd.Parameters.AddWithValue("name", name);
-        cmd.Parameters.AddWithValue("country", country);
-        await using var reader = await cmd.ExecuteReaderAsync(ct);
-        await reader.ReadAsync(ct);
-        return Read(reader);
+            "RETURNING id, name, country, status, created_at", connection, tx))
+        {
+            cmd.Parameters.AddWithValue("name", name);
+            cmd.Parameters.AddWithValue("country", country);
+            await using var reader = await cmd.ExecuteReaderAsync(ct);
+            await reader.ReadAsync(ct);
+            tenant = Read(reader);
+        }
+
+        await using (var owner = new NpgsqlCommand(
+            "INSERT INTO identity.users (tenant_id, phone, role) VALUES (@tenant, @phone, 'owner')", connection, tx))
+        {
+            owner.Parameters.AddWithValue("tenant", tenant.Id);
+            owner.Parameters.AddWithValue("phone", ownerPhone);
+            await owner.ExecuteNonQueryAsync(ct);
+        }
+
+        await tx.CommitAsync(ct);
+        return tenant;
     }
 
     /// <summary>Reads a tenant as the current tenant. Row-level security hides every other tenant.</summary>

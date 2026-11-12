@@ -29,7 +29,7 @@ public sealed class BranchTests(IdentityApiFactory factory) : IClassFixture<Iden
 
     private async Task<Guid> NewTenant(string name)
     {
-        var response = await factory.CreateClient().PostAsJsonAsync("/tenants/", new RegisterTenantRequest(name, null));
+        var response = await factory.CreateClient().PostAsJsonAsync("/tenants/", new RegisterTenantRequest(name, null, "+962790000003"));
         return (await response.Content.ReadFromJsonAsync<Tenant>())!.Id;
     }
 

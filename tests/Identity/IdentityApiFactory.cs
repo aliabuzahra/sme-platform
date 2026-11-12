@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.Extensions.Configuration;
 using Npgsql;
 
 namespace Sme.Identity.Tests;
@@ -54,10 +53,9 @@ public sealed class IdentityApiFactory : WebApplicationFactory<Program>, IAsyncL
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Development");
-        builder.ConfigureAppConfiguration((_, config) =>
-            config.AddInMemoryCollection(new Dictionary<string, string?>
-            {
-                ["Database:ConnectionString"] = ConnectionString,
-            }));
+        // UseSetting lands in the host configuration before Program.cs runs, so the service reads
+        // this database when it registers its data source. ConfigureAppConfiguration would apply
+        // too late for settings read at registration time and the tests would hit the Compose database.
+        builder.UseSetting("Database:ConnectionString", ConnectionString);
     }
 }

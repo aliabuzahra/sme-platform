@@ -15,6 +15,7 @@ One file per decision, numbered in the order they were written. A record is shor
 | [0009](0009-service-images-before-staging.md) | Container images for services before Staging | Proposed |
 | [0010](0010-classic-sln-alongside-slnx.md) | Classic `.sln` alongside `slnx` | Proposed |
 | [0011](0011-repository-license.md) | Repository license | Proposed |
+| [0012](0012-platform-access-tokens.md) | Platform access tokens are HS256 JWTs issued by Identity | Accepted |
 
 ## Statuses
 

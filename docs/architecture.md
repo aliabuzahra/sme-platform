@@ -7,14 +7,14 @@ One repository. One .NET project per service. Services build and run separately 
 | Project | Port | Responsibility (planned) | Card that adds behavior |
 | --- | --- | --- | --- |
 | `src/Gateway` | 5080 | Single HTTP entry point. Validates the token, checks the tenant and module entitlements, forwards to a service. | UC-011 |
-| `src/Identity` | 5081 | Tenants (done, UC-006), branches with opening hours (done, UC-008), users, roles, invitations, phone and OTP sign-in. | UC-007, UC-016 |
+| `src/Identity` | 5081 | Tenants (UC-006), branches with opening hours (UC-008), phone and OTP sign-in with tokens (UC-007); roles and invitations to come. | UC-016 |
 | `src/Notifications` | 5082 | Outbound messages: OTP delivery, later SMS and WhatsApp. | UC-007 (fake sender), later cards |
 | `src/Audit` | 5083 | Audit trail of who did what, per tenant. | later card |
 | `src/Billing` | 5084 | Plans, module entitlements, invoices. | later card |
 | `src/Templates` | 5085 | Sector templates: services, labels, messages that a new tenant starts with. | UC-017, UC-020 |
 | `src/BuildingBlocks` | n/a | Shared library. Cross-cutting code only: tenant context and tenant-aware connections (done, UC-006), SQL migrator (done), outbox, messaging contracts. | UC-009, UC-012 |
 
-Each service has an `xUnit` test project under `tests/<Service>`. Every service exposes `GET /health`. Identity also exposes `POST /tenants/`, `GET /tenants/{id}`, and `POST`, `GET /branches/` and `GET /branches/{id}` for the current tenant. Ports are set in each project's `Properties/launchSettings.json`.
+Each service has an `xUnit` test project under `tests/<Service>`. Every service exposes `GET /health`. Identity also exposes `POST /tenants/` (registration with the owner's phone), `GET /tenants/{id}`, `POST`, `GET /branches/` and `GET /branches/{id}` for the current tenant, and sign-in: `POST /auth/otp/request`, `POST /auth/otp/verify`, `GET /auth/me`. Ports are set in each project's `Properties/launchSettings.json`.
 
 ## Boundaries
 
@@ -29,7 +29,7 @@ These rules are enforced by review and, where a later card adds it, by an archit
 
 ```
 client (web UC-018, mobile UC-019)
-   │  HTTPS, bearer token with tenant and module claims
+   │  HTTPS, bearer token with tenant and module claims (issued by Identity, UC-007, ADR-0012)
    ▼
 Gateway  ── 401 without a valid token, 403 for a disabled module (UC-011)
    │
@@ -40,7 +40,7 @@ service (Identity, Billing, ...)  ── reads and writes only its own tenant's 
 outbox ──► Service Bus ──► consumers in other services (UC-012)
 ```
 
-Today the Gateway forwards nothing. The flow above is the target that UC-006 to UC-012 build toward, in that order.
+Today the Gateway forwards nothing, and each service validates the token itself with `AddPlatformJwt()` from `Sme.BuildingBlocks`. The flow above is the target that UC-011 and UC-012 complete.
 
 ## Data
 
@@ -50,7 +50,7 @@ How data is split between services (one database per service, one schema per ser
 
 Tenant isolation is row-level (ADR-0007). The pieces in `Sme.BuildingBlocks`:
 
-- `TenantContext`, scoped per request, holds the current tenant. `UseTenantHeader()` fills it from `X-Tenant-Id` until UC-007 replaces that with the token claim.
+- `TenantContext`, scoped per request, holds the current tenant. `UseTenantFromToken()` fills it from the `tenant_id` claim of a valid bearer token. `UseTenantHeader()` fills it from `X-Tenant-Id` only when `Tenancy:AllowHeader` is set, which only Development does.
 - `TenantConnectionFactory` opens connections in two modes. Platform mode is the owning login role with no tenant, used only where no tenant exists yet (registration). Tenant mode does `SET ROLE sme_app` and sets `app.tenant_id`, so every policy filters to that tenant. Npgsql resets both when the connection returns to the pool.
 - `SqlMigrator` applies a service's embedded `Migrations/NNNN_name.sql` scripts once each, recorded in `<schema>.schema_migrations`, at service start.
 
@@ -91,3 +91,4 @@ Accepted and proposed decisions are in [`adr/`](adr/README.md). The short list:
 - ADR-0009 Container images for services before Staging (proposed, needs the owner).
 - ADR-0010 Classic `.sln` alongside `slnx` (proposed, default is no).
 - ADR-0011 Repository license (proposed, needs the owner).
+- ADR-0012 Platform access tokens are HS256 JWTs issued by Identity.

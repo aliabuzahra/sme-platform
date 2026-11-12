@@ -1,4 +1,5 @@
 using Sme.BuildingBlocks.Tenancy;
+using Sme.Identity.Auth;
 
 namespace Sme.Identity.Tenants;
 
@@ -21,7 +22,11 @@ public static class TenantEndpoints
             {
                 return Results.ValidationProblem(new Dictionary<string, string[]> { ["country"] = ["Country must be a two-letter code."] });
             }
-            var tenant = await tenants.RegisterAsync(name, country, ct);
+            if (!PhoneNumber.TryNormalize(request.OwnerPhone, out var ownerPhone))
+            {
+                return Results.ValidationProblem(new Dictionary<string, string[]> { ["ownerPhone"] = ["Enter the owner's phone in international form, e.g. +962791234567."] });
+            }
+            var tenant = await tenants.RegisterAsync(name, country, ownerPhone, ct);
             return Results.Created($"/tenants/{tenant.Id}", tenant);
         });
 

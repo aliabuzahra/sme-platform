@@ -8,13 +8,15 @@ namespace Sme.BuildingBlocks.Tenancy;
 /// Reads the tenant for the request from the <c>X-Tenant-Id</c> header.
 /// </summary>
 /// <remarks>
-/// A stand-in until UC-007 puts the tenant in the sign-in token and UC-011 makes the Gateway
-/// the only caller. Services listen on localhost only (ADR-0006), so until then the header is
-/// no weaker than the network they sit on. Remove it in UC-011.
+/// A development stand-in for the tenant claim in a sign-in token (UC-007). It is only honoured
+/// when <c>Tenancy:AllowHeader</c> is true, which <c>appsettings.Development.json</c> sets, and a
+/// request that already carries a token keeps the token's tenant. UC-011 removes it once the
+/// Gateway is the only caller.
 /// </remarks>
 public static class TenantHeaderMiddleware
 {
     public const string HeaderName = "X-Tenant-Id";
+    public const string AllowHeaderSetting = "Tenancy:AllowHeader";
 
     public static IServiceCollection AddTenantContext(this IServiceCollection services)
     {
@@ -23,10 +25,11 @@ public static class TenantHeaderMiddleware
         return services;
     }
 
-    public static IApplicationBuilder UseTenantHeader(this IApplicationBuilder app) =>
-        app.Use(async (context, next) =>
+    public static IApplicationBuilder UseTenantHeader(this IApplicationBuilder app, bool allow) =>
+        !allow ? app : app.Use(async (context, next) =>
         {
-            if (context.Request.Headers.TryGetValue(HeaderName, out var raw))
+            var tenant = context.RequestServices.GetRequiredService<TenantContext>();
+            if (tenant.TenantId is null && context.Request.Headers.TryGetValue(HeaderName, out var raw))
             {
                 if (!Guid.TryParse(raw.ToString(), out var tenantId))
                 {
@@ -34,7 +37,7 @@ public static class TenantHeaderMiddleware
                     await context.Response.WriteAsJsonAsync(new { error = $"{HeaderName} must be a UUID." });
                     return;
                 }
-                context.RequestServices.GetRequiredService<TenantContext>().Set(tenantId);
+                tenant.Set(tenantId);
             }
             await next(context);
         });

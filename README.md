@@ -86,11 +86,22 @@ curl -s -X POST localhost:5081/branches/ -H 'X-Tenant-Id: <id>' -H 'content-type
 curl -s localhost:5081/branches/ -H 'X-Tenant-Id: <id>'
 ```
 
-The `X-Tenant-Id` header stands in for the tenant claim until UC-007 issues tokens and UC-011 puts the Gateway in front; a request for any other tenant's id is a 404.
+Sign-in (UC-007) is by phone and one-time code. Registration takes the owner's phone (`ownerPhone`, international form, or a Jordanian `07...` number). In Development the code is not sent anywhere: the **fake sender** logs it (`OTP for +9627...: 123456`). The token carries the tenant and module claims (ADR-0012); send it as a bearer token and the service reads the tenant from it.
+
+```bash
+curl -s -X POST localhost:5081/tenants/ -H 'content-type: application/json' -d '{"name":"Amman Bakery","ownerPhone":"0791234567"}'
+curl -s -X POST localhost:5081/auth/otp/request -H 'content-type: application/json' -d '{"phone":"0791234567"}'
+curl -s -X POST localhost:5081/auth/otp/verify  -H 'content-type: application/json' -d '{"phone":"0791234567","code":"<code from the log>"}'
+curl -s localhost:5081/auth/me -H 'Authorization: Bearer <accessToken>'
+```
+
+Codes live five minutes, allow five wrong attempts, and a phone may request three per ten minutes. A phone that belongs to several businesses gets a 409 listing them and passes `tenantId` on the next verify.
+
+The `X-Tenant-Id` header is a Development stand-in for the token's tenant claim (`Tenancy:AllowHeader`); a request for any other tenant's id is a 404. `Jwt:SigningKey` has a placeholder in `appsettings.Development.json`; every other environment must set its own key of at least 32 bytes.
 
 ## Not in this skeleton
 
-- Product behavior beyond tenant registration: phone OTP, branches, users and roles, the gateway auth check, the outbox, App Insights
+- Product behavior beyond tenants, branches and sign-in: users and roles, the gateway auth check, the outbox, App Insights
 - Container images for the .NET services
 - The web and mobile clients (UC-018, UC-019)
 
