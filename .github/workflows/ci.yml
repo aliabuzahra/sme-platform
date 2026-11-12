@@ -2,6 +2,8 @@
 # Acceptance: a PR with a failing test cannot be merged (requires the owner
 # to make this job a required status check — see docs/branch-protection-for-owner.md);
 # this job is capped at 8 minutes so the run stays under 10.
+# After the build, the job validates Compose, starts Postgres with
+# `docker compose up -d --wait`, and always removes it with `docker compose down -v`.
 name: CI
 
 on:
@@ -53,3 +55,10 @@ jobs:
 
       - name: Validate Docker Compose
         run: docker compose config --quiet
+
+      - name: Start Docker Compose and wait until healthy
+        run: docker compose up -d --wait
+
+      - name: Stop Docker Compose
+        if: always()
+        run: docker compose down -v

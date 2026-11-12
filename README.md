@@ -37,7 +37,7 @@ dotnet test Sme.Platform.slnx
 
 ## CI
 
-GitHub Actions runs on every pull request and every push to `main`. The job is named **Build and test**. It restores, builds, and tests `Sme.Platform.slnx` with the .NET SDK from `global.json`, then runs `docker compose config`. The job is limited to 8 minutes.
+GitHub Actions runs on every pull request and every push to `main`. The job is named **Build and test**. It restores, builds, and tests `Sme.Platform.slnx` with the .NET SDK from `global.json`, checks `docker compose config`, starts Postgres with `docker compose up -d --wait`, then runs `docker compose down -v`. The job is limited to 8 minutes.
 
 A pull request whose tests fail cannot be merged once the repository owner has required the **Build and test** check on the target branch. That setting is documented in `docs/branch-protection-for-owner.md` and is applied by the owner, not by this change.
 
