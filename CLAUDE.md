@@ -1,6 +1,14 @@
-# Definition of done
+# Working in this repository
 
-Draft for the repository skeleton (UC-001). UC-003 adds the architecture docs and ADRs. Until those exist, follow this file and `README.md`.
+Read, in this order:
+
+1. This file — definition of done and boundaries.
+2. [`docs/architecture.md`](docs/architecture.md) — services, request and event flow, tenancy, environments, and which section each card maps to.
+3. The ADRs the card names, under [`docs/adr/`](docs/adr/README.md). A **Proposed** ADR is not in force: prepare for it, do not lock it in. If a card needs a decision with no ADR, add one as Proposed in the same pull request and name its owner.
+
+`README.md` covers how to build, run and test.
+
+# Definition of done
 
 A change is done only when all three are true:
 

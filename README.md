@@ -71,9 +71,12 @@ dotnet run --project src/Identity
 
 `GET http://localhost:5081/health` returns the service name. The ports are listed in the layout above and in each project's `Properties/launchSettings.json`. Services do not connect to Postgres yet.
 
+## Architecture
+
+`docs/architecture.md` describes the services, boundaries, request and event flow, tenancy and environments, and maps every card to its section. Decisions are ADRs under `docs/adr/`. Read both before implementing a card.
+
 ## Not in this skeleton
 
-- Architecture docs and ADRs (UC-003)
 - Product behavior: tenants, row-level security, phone OTP, the gateway auth check, the outbox, App Insights
 - Container images for the .NET services
 - The web and mobile clients (UC-018, UC-019)
@@ -89,9 +92,11 @@ dotnet run --project src/Identity
 
 ## Open decisions
 
-These need the owner before later cards lock them in. UC-003 is the place to record the answers as ADRs.
+These need the owner before later cards lock them in. They are recorded as **Proposed** ADRs:
 
-- Database-per-service, schema-per-service, or one shared database once services start storing data.
+- The repository license — `docs/adr/0009-repository-license.md`.
+
+Still open without an ADR, to be decided on the card that needs it:
+
 - Whether each service gets its own image in Compose before the Azure staging environment (UC-013).
-- Whether the classic `.sln` format is required for a tool that cannot read `slnx`.
-- The repository license. There is no `LICENSE` file yet.
+- Whether the classic `.sln` format is required for a tool that cannot read `slnx` (see ADR-0001).
