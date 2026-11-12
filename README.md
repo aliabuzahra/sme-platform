@@ -35,6 +35,12 @@ dotnet test Sme.Platform.slnx
 
 `dotnet test` succeeds with no tests. Each `tests/<Service>` project is intentionally empty until a later card adds behavior.
 
+## CI
+
+GitHub Actions runs on every pull request and every push to `main`. The job is named **Build and test**. It restores, builds, and tests `Sme.Platform.slnx` with the .NET SDK from `global.json`, then runs `docker compose config`. The job is limited to 8 minutes.
+
+A pull request whose tests fail cannot be merged once the repository owner has required the **Build and test** check on the target branch. That setting is documented in `docs/branch-protection-for-owner.md` and is applied by the owner, not by this change.
+
 ## Run Postgres
 
 Compose starts Postgres only. The defaults below are local placeholders, already applied when `.env` is absent, so a clean machine does not need extra setup:
@@ -67,7 +73,6 @@ dotnet run --project src/Identity
 
 ## Not in this skeleton
 
-- CI workflows (UC-002)
 - Architecture docs and ADRs (UC-003)
 - Product behavior: tenants, row-level security, phone OTP, the gateway auth check, the outbox, App Insights
 - Container images for the .NET services
